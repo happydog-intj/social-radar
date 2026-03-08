@@ -82,12 +82,12 @@ jobs:
             MESSAGE="${MESSAGE}• Positive: ${POSITIVE}%0A"
             MESSAGE="${MESSAGE}• Neutral: ${NEUTRAL}%0A"
             MESSAGE="${MESSAGE}• Negative: ${NEGATIVE}%0A%0A"
-            MESSAGE="${MESSAGE}🔗 <a href='https://${{ github.repository_owner }}.github.io/twitter-radar/'>View Full Report</a>%0A"
-            MESSAGE="${MESSAGE}📡 <a href='https://${{ github.repository_owner }}.github.io/twitter-radar/feed.xml'>RSS Feed</a>"
+            MESSAGE="${MESSAGE}🔗 <a href='https://${{ github.repository_owner }}.github.io/social-radar/'>View Full Report</a>%0A"
+            MESSAGE="${MESSAGE}📡 <a href='https://${{ github.repository_owner }}.github.io/social-radar/feed.xml'>RSS Feed</a>"
           else
             MESSAGE="✅ <b>Twitter Analysis completed</b>%0A%0A"
             MESSAGE="${MESSAGE}📅 Date: $(date +'%Y-%m-%d')%0A"
-            MESSAGE="${MESSAGE}🔗 <a href='https://${{ github.repository_owner }}.github.io/twitter-radar/'>View Report</a>"
+            MESSAGE="${MESSAGE}🔗 <a href='https://${{ github.repository_owner }}.github.io/social-radar/'>View Report</a>"
           fi
 
           curl -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \

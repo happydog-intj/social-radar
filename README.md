@@ -1,8 +1,8 @@
-# Twitter Radar 🔭
+# Social Radar 🔭
 
-自动监控 Twitter 账号并使用 Qwen AI 分析推文情感和 SHEIN 相关性。
+全方位 SHEIN 品牌监控系统：自动监控 Twitter 社交媒体讨论 + App Store/Google Play 用户评论，使用 Qwen AI 进行情感分析和主题识别。
 
-[![Daily Analysis](https://github.com/YOUR_USERNAME/twitter-radar/actions/workflows/daily-analysis.yml/badge.svg)](https://github.com/YOUR_USERNAME/twitter-radar/actions/workflows/daily-analysis.yml)
+[![Daily Analysis](https://github.com/happydog-intj/social-radar/actions/workflows/analyze.yml/badge.svg)](https://github.com/happydog-intj/social-radar/actions/workflows/analyze.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## 🎯 功能特性
@@ -38,7 +38,7 @@
 ## 📁 项目结构
 
 ```
-twitter-radar/
+social-radar/
 ├── .github/workflows/
 │   ├── analyze.yml               # Twitter 分析工作流
 │   ├── analyze-appstore.yml      # App Store 分析工作流
@@ -85,8 +85,8 @@ twitter-radar/
 
 ```bash
 # 克隆仓库
-git clone https://github.com/YOUR_USERNAME/twitter-radar.git
-cd twitter-radar
+git clone https://github.com/happydog-intj/social-radar.git
+cd social-radar
 
 # 安装依赖
 pnpm install

@@ -28,7 +28,7 @@ export function formatTelegramMessage(
 ): string {
   const lines: string[] = [];
 
-  lines.push('🔭 *Twitter Radar Report*');
+  lines.push('🔭 *Social Radar Report*');
   lines.push('');
   lines.push(`📊 Total tweets analyzed: ${totalTweets}`);
   lines.push(`🎯 SHEIN related: ${sheinRelated.length}`);

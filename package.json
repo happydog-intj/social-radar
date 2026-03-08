@@ -1,7 +1,7 @@
 {
-  "name": "twitter-radar",
+  "name": "social-radar",
   "version": "1.0.0",
-  "description": "Monitor Twitter accounts and analyze posts with Qwen AI for sentiment and Shein relevance",
+  "description": "Monitor social media (Twitter) and app reviews (App Store, Google Play) with Qwen AI for SHEIN brand analysis",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
@@ -18,14 +18,17 @@
   },
   "keywords": [
     "twitter",
-    "x",
+    "app-store",
+    "google-play",
+    "social-media",
     "radar",
     "qwen",
     "sentiment-analysis",
     "shein",
-    "monitoring"
+    "monitoring",
+    "brand-monitoring"
   ],
-  "author": "TwitterRadar",
+  "author": "SocialRadar",
   "license": "MIT",
   "dependencies": {
     "axios": "^1.6.7",

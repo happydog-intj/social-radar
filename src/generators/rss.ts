@@ -5,10 +5,10 @@ import { OUTPUT_DIR, PUBLIC_DIR } from '../config.js';
 
 export function generateRSSFeed(): void {
   const feed = new RSS({
-    title: 'Twitter Radar',
-    description: 'Monitor Twitter accounts and analyze posts with AI',
-    feed_url: 'https://happydog-intj.github.io/twitter-radar/feed.xml',
-    site_url: 'https://happydog-intj.github.io/twitter-radar',
+    title: 'Social Radar - SHEIN Brand Monitor',
+    description: 'Monitor SHEIN brand across Twitter, App Store, and Google Play with AI',
+    feed_url: 'https://happydog-intj.github.io/social-radar/feed.xml',
+    site_url: 'https://happydog-intj.github.io/social-radar',
     language: 'en',
     pubDate: new Date(),
   });
@@ -18,9 +18,9 @@ export function generateRSSFeed(): void {
 
   for (const report of reports) {
     feed.item({
-      title: `Twitter Radar - ${report.date}`,
+      title: `Social Radar - ${report.date}`,
       description: report.content.substring(0, 500) + '...',
-      url: `https://happydog-intj.github.io/twitter-radar/${report.date}.html`,
+      url: `https://happydog-intj.github.io/social-radar/${report.date}.html`,
       date: new Date(report.date),
     });
   }

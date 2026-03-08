@@ -7,7 +7,7 @@ import { sendTelegramNotification, formatTelegramMessage } from './notifiers/tel
 import { LANGUAGE } from './config.js';
 
 async function main() {
-  console.log('🔭 Twitter Radar - Starting analysis...');
+  console.log('🔭 Social Radar - Starting Twitter analysis...');
 
   const today = format(new Date(), 'yyyy-MM-dd');
 
