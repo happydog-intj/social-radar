@@ -70,12 +70,76 @@ export interface Digest {
   language: 'en' | 'zh';
 }
 
+// App Store types
+export interface AppStoreReview {
+  id: string;
+  author: string;
+  rating: number; // 1-5
+  title: string;
+  content: string;
+  date: Date;
+  version: string;
+  region: string;
+  regionCode: string;
+  voteSum: number;
+  voteCount: number;
+}
+
+export interface AnalyzedAppStoreReview extends AppStoreReview {
+  sentiment: SentimentAnalysis;
+  topics: string[]; // 主要话题标签: delivery, quality, price, etc.
+  analyzedAt: string;
+}
+
+export interface AppStoreRegion {
+  code: string; // us, gb, ca, etc.
+  name: string;
+  language: string;
+}
+
+export interface AppStoreConfig {
+  appId: string;
+  regions: AppStoreRegion[];
+  maxReviewsPerRegion: number;
+}
+
+export interface AppStoreDigest {
+  date: string;
+  appInfo: {
+    name: string;
+    averageRating: number;
+    totalReviews: number;
+    currentVersion: string;
+  };
+  summary: {
+    totalReviews: number;
+    ratingBreakdown: {
+      5: number;
+      4: number;
+      3: number;
+      2: number;
+      1: number;
+    };
+    sentimentBreakdown: {
+      positive: number;
+      negative: number;
+      neutral: number;
+    };
+    topTopics: Array<{ topic: string; count: number }>;
+  };
+  reviewsByRegion: {
+    [region: string]: AnalyzedAppStoreReview[];
+  };
+  language: 'en' | 'zh';
+}
+
 export interface Config {
   twitter: {
     accounts: TwitterAccount[];
     maxTweetsPerAccount: number;
     sinceDays: number;
   };
+  appStore?: AppStoreConfig;
   qwen: {
     model: string;
     apiKey: string;
