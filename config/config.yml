@@ -1,0 +1,85 @@
+# Twitter Radar Configuration
+
+twitter:
+  # Twitter accounts to monitor
+  accounts:
+    - username: shein_official
+      priority: high
+      description: "Official SHEIN account"
+
+    - username: SHEIN_News
+      priority: high
+      description: "SHEIN News account"
+
+    - username: SHEINcurve
+      priority: medium
+      description: "SHEIN Curve (plus size)"
+
+    - username: sheinmen
+      priority: medium
+      description: "SHEIN Men"
+
+    # Add competitor accounts
+    - username: ZARA
+      priority: low
+      description: "ZARA official"
+
+    - username: hm
+      priority: low
+      description: "H&M official"
+
+  # Maximum tweets to fetch per account
+  maxTweetsPerAccount: 50
+
+  # Fetch tweets from last N days
+  sinceDays: 7
+
+qwen:
+  # Qwen model to use
+  model: "qwen-plus"  # qwen-plus, qwen-turbo, qwen-max
+
+  # API key (set in .env)
+  apiKey: "${QWEN_API_KEY}"
+
+shein:
+  # Keywords related to SHEIN
+  keywords:
+    - shein
+    - SHEIN
+    - Shein
+    - "#shein"
+    - "#SHEIN"
+    - "@shein_official"
+
+  # SHEIN brand names
+  brands:
+    - "SHEIN"
+    - "SHEINcurve"
+    - "ROMWE"
+    - "MOTF"
+
+  # Related terms
+  relatedTerms:
+    - "fast fashion"
+    - "online shopping"
+    - "fashion haul"
+    - "shein haul"
+    - "clothing review"
+    - "shein review"
+    - "shein dress"
+    - "shein clothing"
+
+# Output configuration
+output:
+  formats:
+    - markdown
+    - json
+    - rss
+
+  # Create GitHub issues
+  createIssues: true
+
+# Notification channels
+notifications:
+  telegram:
+    enabled: false  # Set to true and provide credentials in .env

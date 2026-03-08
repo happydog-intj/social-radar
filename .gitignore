@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.env
+*.log
+# Keep reports and public for GitHub Pages
+# reports/
+# public/
