@@ -5,6 +5,10 @@ on:
     - cron: '30 2 * * *'  # Run daily at 2:30 AM UTC (30 min after Twitter analysis)
   workflow_dispatch:  # Allow manual trigger
 
+concurrency:
+  group: social-radar-reports
+  cancel-in-progress: false
+
 jobs:
   analyze:
     runs-on: ubuntu-latest
@@ -47,6 +51,7 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "chore: update App Store analysis $(date +'%Y-%m-%d')"
+            git pull --rebase origin main
             git push
           fi
 

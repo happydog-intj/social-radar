@@ -5,6 +5,10 @@ on:
     - cron: '0 3 * * *'  # Run daily at 3:00 AM UTC (1 hour after App Store)
   workflow_dispatch:  # Allow manual trigger
 
+concurrency:
+  group: social-radar-reports
+  cancel-in-progress: false
+
 jobs:
   analyze:
     runs-on: ubuntu-latest
@@ -47,6 +51,7 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "chore: update Google Play analysis $(date +'%Y-%m-%d')"
+            git pull --rebase origin main
             git push
           fi
 
