@@ -31,8 +31,8 @@ twitter:
   # Maximum tweets to fetch per account
   maxTweetsPerAccount: 50
 
-  # Fetch tweets from last N days
-  sinceDays: 7
+  # Fetch tweets from last N days (set to 1 for daily incremental data)
+  sinceDays: 1
 
 qwen:
   # Qwen model to use
