@@ -55,17 +55,43 @@ jobs:
           fi
 
       - name: Send Telegram notification
-        if: env.TELEGRAM_BOT_TOKEN != '' && env.TELEGRAM_CHAT_ID != ''
+        if: success()
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          REPORT_COUNT=$(find reports -name "*.md" -type f | wc -l)
-          MESSAGE="✅ Twitter Analysis completed successfully
-          📊 Total reports: $REPORT_COUNT
-          📅 Date: $(date +'%Y-%m-%d')
-          🔗 View: https://${{ github.repository_owner }}.github.io/twitter-radar/"
+          # Extract analysis results from the English report
+          TODAY=$(date +'%Y-%m')
+          REPORT_FILE="reports/${TODAY}/$(date +'%Y-%m-%d')-en.md"
+
+          if [ -f "$REPORT_FILE" ]; then
+            # Extract key metrics from the report
+            TOTAL_TWEETS=$(grep "Total Tweets" "$REPORT_FILE" | grep -oE '[0-9]+' | head -1)
+            SHEIN_RELATED=$(grep "SHEIN Related" "$REPORT_FILE" | grep -oE '[0-9]+' | head -1)
+            SHEIN_PERCENT=$(grep "SHEIN Related" "$REPORT_FILE" | grep -oE '[0-9]+\.[0-9]+' | head -1)%
+            POSITIVE=$(grep "😊 Positive:" "$REPORT_FILE" | grep -oE '[0-9]+' | head -1)
+            NEUTRAL=$(grep "😐 Neutral:" "$REPORT_FILE" | grep -oE '[0-9]+' | head -1)
+            NEGATIVE=$(grep "😞 Negative:" "$REPORT_FILE" | grep -oE '[0-9]+' | head -1)
+
+            MESSAGE="🎯 <b>Twitter Radar Daily Report</b>%0A%0A"
+            MESSAGE="${MESSAGE}📅 Date: $(date +'%Y-%m-%d')%0A%0A"
+            MESSAGE="${MESSAGE}📊 <b>Analysis Summary:</b>%0A"
+            MESSAGE="${MESSAGE}• Total Tweets: ${TOTAL_TWEETS}%0A"
+            MESSAGE="${MESSAGE}• SHEIN Related: ${SHEIN_RELATED} (${SHEIN_PERCENT})%0A%0A"
+            MESSAGE="${MESSAGE}😊 <b>Sentiment Breakdown:</b>%0A"
+            MESSAGE="${MESSAGE}• Positive: ${POSITIVE}%0A"
+            MESSAGE="${MESSAGE}• Neutral: ${NEUTRAL}%0A"
+            MESSAGE="${MESSAGE}• Negative: ${NEGATIVE}%0A%0A"
+            MESSAGE="${MESSAGE}🔗 <a href='https://${{ github.repository_owner }}.github.io/twitter-radar/'>View Full Report</a>%0A"
+            MESSAGE="${MESSAGE}📡 <a href='https://${{ github.repository_owner }}.github.io/twitter-radar/feed.xml'>RSS Feed</a>"
+          else
+            MESSAGE="✅ <b>Twitter Analysis completed</b>%0A%0A"
+            MESSAGE="${MESSAGE}📅 Date: $(date +'%Y-%m-%d')%0A"
+            MESSAGE="${MESSAGE}🔗 <a href='https://${{ github.repository_owner }}.github.io/twitter-radar/'>View Report</a>"
+          fi
 
           curl -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-            -H "Content-Type: application/json" \
-            -d "{\"chat_id\": \"${TELEGRAM_CHAT_ID}\", \"text\": \"${MESSAGE}\", \"parse_mode\": \"HTML\"}"
+            -d "chat_id=${TELEGRAM_CHAT_ID}" \
+            -d "text=${MESSAGE}" \
+            -d "parse_mode=HTML" \
+            -d "disable_web_page_preview=true"
