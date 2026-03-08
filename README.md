@@ -23,17 +23,15 @@
 - 🔍 **关键词提取** - 自动识别 SHEIN 相关关键词
 
 ### 报告生成
-- 📝 **双语报告** - 支持中英文报告
+- 📝 **Markdown 报告** - 清晰易读的分析报告
 - 📊 **数据统计** - Twitter: 总览、情感分布、相关性 | App Store/Google Play: 评分分布、主题统计、开发者回复率
 - 🎨 **分类展示** - Twitter: 按情感、账号、相关性 | App Store/Google Play: 按地区、评分、情感
 - 🌍 **多地区对比** - App Store (4地区) + Google Play (5地区) 全球市场覆盖
-- 📡 **RSS 订阅** - 自动生成 RSS feed
 
 ### 多渠道发布
-- 📁 **GitHub 仓库** - 自动提交报告文件
-- 📋 **GitHub Issues** - 每日自动创建 Issue
-- 📱 **Telegram 通知** - 推送关键摘要
-- 🌐 **GitHub Pages** - 托管 RSS feed
+- 📋 **GitHub Issues** - 每日自动创建 Issue，报告存储为 Issue（避免项目膨胀）
+- 📱 **Telegram 通知** - 推送分析摘要和报告链接
+- 🏷️ **标签分类** - 自动标记报告类型（twitter/app-store/google-play, daily-report）
 
 ## 📁 项目结构
 
@@ -42,8 +40,7 @@ social-radar/
 ├── .github/workflows/
 │   ├── analyze.yml               # Twitter 分析工作流
 │   ├── analyze-appstore.yml      # App Store 分析工作流
-│   ├── analyze-googleplay.yml    # Google Play 分析工作流
-│   └── pages.yml                 # GitHub Pages 部署
+│   └── analyze-googleplay.yml    # Google Play 分析工作流
 ├── config/
 │   └── config.yml                # 配置文件（监控账号、关键词等）
 ├── src/
@@ -58,15 +55,12 @@ social-radar/
 │   ├── generators/
 │   │   ├── markdown.ts           # Twitter Markdown 报告生成
 │   │   ├── app-store-markdown.ts # App Store Markdown 报告生成
-│   │   ├── google-play-markdown.ts # Google Play Markdown 报告生成
-│   │   └── rss.ts                # RSS feed 生成
-│   ├── notifiers/
-│   │   └── telegram.ts           # Telegram 通知
+│   │   └── google-play-markdown.ts # Google Play Markdown 报告生成
 │   ├── types.ts                  # TypeScript 类型定义
 │   ├── config.ts                 # 配置加载
-│   └── index.ts                  # 主程序入口
-├── reports/                      # 生成的报告（自动创建）
-├── public/                       # RSS feed（自动创建）
+│   ├── index.ts                  # Twitter 分析主程序
+│   ├── index-appstore.ts         # App Store 分析主程序
+│   └── index-googleplay.ts       # Google Play 分析主程序
 ├── package.json
 ├── tsconfig.json
 └── README.md

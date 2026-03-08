@@ -14,7 +14,8 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write  # Required for committing reports and RSS feed
+      contents: read
+      issues: write  # Required for creating issues
 
     steps:
       - name: Checkout repository
@@ -38,26 +39,45 @@ jobs:
         run: pnpm build
 
       - name: Run Twitter analysis
+        id: analysis
         env:
           TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
           QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
-        run: pnpm analyze
-
-      - name: Generate RSS feed
-        run: pnpm generate:rss
-
-      - name: Commit and push reports
         run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git add reports/ public/
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "chore: update Twitter analysis $(date +'%Y-%m-%d')"
-            git pull --rebase origin main
-            git push
-          fi
+          # Run analysis and capture both stdout (markdown) and stderr (logs + stats)
+          pnpm analyze > report.md 2> analysis.log
+
+          # Extract stats from stderr
+          STATS=$(grep -A1 "STATS_JSON_START" analysis.log | tail -1)
+          echo "stats=$STATS" >> $GITHUB_OUTPUT
+
+          # Show logs
+          cat analysis.log
+
+      - name: Create GitHub Issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          STATS='${{ steps.analysis.outputs.stats }}'
+          DATE=$(echo "$STATS" | jq -r '.date')
+          TOTAL=$(echo "$STATS" | jq -r '.total')
+          SHEIN=$(echo "$STATS" | jq -r '.sheinRelated')
+          PERCENT=$(echo "$STATS" | jq -r '.sheinPercent')
+
+          TITLE="📊 Twitter Analysis - $DATE"
+          LABELS="twitter,daily-report"
+
+          # Create issue with markdown report as body
+          ISSUE_URL=$(gh issue create \
+            --title "$TITLE" \
+            --body-file report.md \
+            --label "$LABELS")
+
+          echo "Created issue: $ISSUE_URL"
+          echo "issue_url=$ISSUE_URL" >> $GITHUB_OUTPUT
+
+          # Save issue URL for Telegram notification
+          echo "$ISSUE_URL" > issue_url.txt
 
       - name: Send Telegram notification
         if: success()
@@ -65,35 +85,27 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          # Extract analysis results from the English report
-          TODAY=$(date +'%Y-%m')
-          REPORT_FILE="reports/${TODAY}/$(date +'%Y-%m-%d')-en.md"
+          STATS='${{ steps.analysis.outputs.stats }}'
+          ISSUE_URL=$(cat issue_url.txt)
 
-          if [ -f "$REPORT_FILE" ]; then
-            # Extract key metrics from the report
-            TOTAL_TWEETS=$(grep "Total Tweets" "$REPORT_FILE" | grep -oE '[0-9]+' | head -1)
-            SHEIN_RELATED=$(grep "SHEIN Related" "$REPORT_FILE" | grep -oE '[0-9]+' | head -1)
-            SHEIN_PERCENT=$(grep "SHEIN Related" "$REPORT_FILE" | grep -oE '[0-9]+\.[0-9]+' | head -1)%
-            POSITIVE=$(grep "😊 Positive:" "$REPORT_FILE" | grep -oE '[0-9]+' | head -1)
-            NEUTRAL=$(grep "😐 Neutral:" "$REPORT_FILE" | grep -oE '[0-9]+' | head -1)
-            NEGATIVE=$(grep "😞 Negative:" "$REPORT_FILE" | grep -oE '[0-9]+' | head -1)
+          DATE=$(echo "$STATS" | jq -r '.date')
+          TOTAL=$(echo "$STATS" | jq -r '.total')
+          SHEIN=$(echo "$STATS" | jq -r '.sheinRelated')
+          PERCENT=$(echo "$STATS" | jq -r '.sheinPercent')
+          POSITIVE=$(echo "$STATS" | jq -r '.positive')
+          NEUTRAL=$(echo "$STATS" | jq -r '.neutral')
+          NEGATIVE=$(echo "$STATS" | jq -r '.negative')
 
-            MESSAGE="🎯 <b>Twitter Radar Daily Report</b>%0A%0A"
-            MESSAGE="${MESSAGE}📅 Date: $(date +'%Y-%m-%d')%0A%0A"
-            MESSAGE="${MESSAGE}📊 <b>Analysis Summary:</b>%0A"
-            MESSAGE="${MESSAGE}• Total Tweets: ${TOTAL_TWEETS}%0A"
-            MESSAGE="${MESSAGE}• SHEIN Related: ${SHEIN_RELATED} (${SHEIN_PERCENT})%0A%0A"
-            MESSAGE="${MESSAGE}😊 <b>Sentiment Breakdown:</b>%0A"
-            MESSAGE="${MESSAGE}• Positive: ${POSITIVE}%0A"
-            MESSAGE="${MESSAGE}• Neutral: ${NEUTRAL}%0A"
-            MESSAGE="${MESSAGE}• Negative: ${NEGATIVE}%0A%0A"
-            MESSAGE="${MESSAGE}🔗 <a href='https://${{ github.repository_owner }}.github.io/social-radar/'>View Full Report</a>%0A"
-            MESSAGE="${MESSAGE}📡 <a href='https://${{ github.repository_owner }}.github.io/social-radar/feed.xml'>RSS Feed</a>"
-          else
-            MESSAGE="✅ <b>Twitter Analysis completed</b>%0A%0A"
-            MESSAGE="${MESSAGE}📅 Date: $(date +'%Y-%m-%d')%0A"
-            MESSAGE="${MESSAGE}🔗 <a href='https://${{ github.repository_owner }}.github.io/social-radar/'>View Report</a>"
-          fi
+          MESSAGE="📊 <b>Twitter Analysis Report</b>%0A%0A"
+          MESSAGE="${MESSAGE}📅 Date: ${DATE}%0A%0A"
+          MESSAGE="${MESSAGE}📈 <b>Summary:</b>%0A"
+          MESSAGE="${MESSAGE}• Total Tweets: ${TOTAL}%0A"
+          MESSAGE="${MESSAGE}• SHEIN Related: ${SHEIN} (${PERCENT}%)%0A%0A"
+          MESSAGE="${MESSAGE}😊 <b>Sentiment:</b>%0A"
+          MESSAGE="${MESSAGE}• Positive: ${POSITIVE}%0A"
+          MESSAGE="${MESSAGE}• Neutral: ${NEUTRAL}%0A"
+          MESSAGE="${MESSAGE}• Negative: ${NEGATIVE}%0A%0A"
+          MESSAGE="${MESSAGE}🔗 <a href='${ISSUE_URL}'>View Full Report</a>"
 
           curl -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
             -d "chat_id=${TELEGRAM_CHAT_ID}" \

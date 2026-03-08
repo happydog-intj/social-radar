@@ -14,7 +14,8 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write  # Required for committing reports
+      contents: read
+      issues: write  # Required for creating issues
 
     steps:
       - name: Checkout repository
@@ -38,22 +39,38 @@ jobs:
         run: pnpm build
 
       - name: Run Google Play analysis
+        id: analysis
         env:
           QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
-        run: pnpm analyze:googleplay
-
-      - name: Commit and push reports
         run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git add reports/
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "chore: update Google Play analysis $(date +'%Y-%m-%d')"
-            git pull --rebase origin main
-            git push
-          fi
+          # Run analysis and capture both stdout (markdown) and stderr (logs + stats)
+          pnpm analyze:googleplay > report.md 2> analysis.log
+
+          # Extract stats from stderr
+          STATS=$(grep -A1 "STATS_JSON_START" analysis.log | tail -1)
+          echo "stats=$STATS" >> $GITHUB_OUTPUT
+
+          # Show logs
+          cat analysis.log
+
+      - name: Create GitHub Issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          STATS='${{ steps.analysis.outputs.stats }}'
+          DATE=$(echo "$STATS" | jq -r '.date')
+
+          TITLE="🤖 Google Play Analysis - $DATE"
+          LABELS="google-play,daily-report"
+
+          # Create issue with markdown report as body
+          ISSUE_URL=$(gh issue create \
+            --title "$TITLE" \
+            --body-file report.md \
+            --label "$LABELS")
+
+          echo "Created issue: $ISSUE_URL"
+          echo "$ISSUE_URL" > issue_url.txt
 
       - name: Send Telegram notification
         if: success()
@@ -61,37 +78,29 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          # Extract analysis results from the report
-          TODAY=$(date +'%Y-%m')
-          REPORT_FILE="reports/${TODAY}/$(date +'%Y-%m-%d')-googleplay-en.md"
+          STATS='${{ steps.analysis.outputs.stats }}'
+          ISSUE_URL=$(cat issue_url.txt)
 
-          if [ -f "$REPORT_FILE" ]; then
-            # Extract key metrics
-            TOTAL_REVIEWS=$(grep "Reviews Analyzed" "$REPORT_FILE" | grep -oE '[0-9]+' | head -1)
-            RATING_5=$(grep "⭐⭐⭐⭐⭐ (5):" "$REPORT_FILE" | grep -oE '[0-9]+' | head -1)
-            RATING_1=$(grep "⭐ (1):" "$REPORT_FILE" | grep -oE '[0-9]+' | head -1)
-            POSITIVE=$(grep "😊 Positive:" "$REPORT_FILE" | grep -oE '[0-9]+' | head -1)
-            NEUTRAL=$(grep "😐 Neutral:" "$REPORT_FILE" | grep -oE '[0-9]+' | head -1)
-            NEGATIVE=$(grep "😞 Negative:" "$REPORT_FILE" | grep -oE '[0-9]+' | head -1)
-            DEV_REPLIES=$(grep "Developer Replies:" "$REPORT_FILE" | grep -oE '[0-9]+' | head -1)
+          DATE=$(echo "$STATS" | jq -r '.date')
+          TOTAL=$(echo "$STATS" | jq -r '.total')
+          POSITIVE=$(echo "$STATS" | jq -r '.positive')
+          NEUTRAL=$(echo "$STATS" | jq -r '.neutral')
+          NEGATIVE=$(echo "$STATS" | jq -r '.negative')
+          REPLIES=$(echo "$STATS" | jq -r '.developerReplies')
+          POS_PCT=$(echo "$STATS" | jq -r '.positivePercent')
+          NEU_PCT=$(echo "$STATS" | jq -r '.neutralPercent')
+          NEG_PCT=$(echo "$STATS" | jq -r '.negativePercent')
 
-            MESSAGE="🤖 <b>SHEIN Google Play Analysis</b>%0A%0A"
-            MESSAGE="${MESSAGE}📅 Date: $(date +'%Y-%m-%d')%0A%0A"
-            MESSAGE="${MESSAGE}📊 <b>Reviews Summary:</b>%0A"
-            MESSAGE="${MESSAGE}• Total Analyzed: ${TOTAL_REVIEWS}%0A"
-            MESSAGE="${MESSAGE}• 5-Star: ${RATING_5}%0A"
-            MESSAGE="${MESSAGE}• 1-Star: ${RATING_1}%0A"
-            MESSAGE="${MESSAGE}• Developer Replies: ${DEV_REPLIES}%0A%0A"
-            MESSAGE="${MESSAGE}😊 <b>Sentiment:</b>%0A"
-            MESSAGE="${MESSAGE}• Positive: ${POSITIVE}%0A"
-            MESSAGE="${MESSAGE}• Neutral: ${NEUTRAL}%0A"
-            MESSAGE="${MESSAGE}• Negative: ${NEGATIVE}%0A%0A"
-            MESSAGE="${MESSAGE}🔗 <a href='https://${{ github.repository_owner }}.github.io/social-radar/'>View Reports</a>"
-          else
-            MESSAGE="✅ <b>Google Play Analysis completed</b>%0A%0A"
-            MESSAGE="${MESSAGE}📅 Date: $(date +'%Y-%m-%d')%0A"
-            MESSAGE="${MESSAGE}🔗 <a href='https://${{ github.repository_owner }}.github.io/social-radar/'>View Report</a>"
-          fi
+          MESSAGE="🤖 <b>Google Play Analysis Report</b>%0A%0A"
+          MESSAGE="${MESSAGE}📅 Date: ${DATE}%0A%0A"
+          MESSAGE="${MESSAGE}📊 <b>Summary:</b>%0A"
+          MESSAGE="${MESSAGE}• Total Reviews: ${TOTAL}%0A"
+          MESSAGE="${MESSAGE}• Developer Replies: ${REPLIES}%0A%0A"
+          MESSAGE="${MESSAGE}😊 <b>Sentiment:</b>%0A"
+          MESSAGE="${MESSAGE}• Positive: ${POSITIVE} (${POS_PCT}%)%0A"
+          MESSAGE="${MESSAGE}• Neutral: ${NEUTRAL} (${NEU_PCT}%)%0A"
+          MESSAGE="${MESSAGE}• Negative: ${NEGATIVE} (${NEG_PCT}%)%0A%0A"
+          MESSAGE="${MESSAGE}🔗 <a href='${ISSUE_URL}'>View Full Report</a>"
 
           curl -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
             -d "chat_id=${TELEGRAM_CHAT_ID}" \
