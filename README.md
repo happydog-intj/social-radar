@@ -9,20 +9,23 @@
 
 ### 数据采集
 - 📱 **Twitter API v2** - 获取指定账号的最新推文
+- 🍎 **App Store Reviews** - 抓取 SHEIN app 多地区用户评论
 - ⏰ **定时采集** - 每天自动运行
-- 🎯 **灵活配置** - 支持监控多个账号
-- 📊 **丰富数据** - 包含点赞、转发、回复等互动数据
+- 🎯 **灵活配置** - 支持监控多个账号和地区
+- 📊 **丰富数据** - 包含点赞、转发、回复、评分等互动数据
 
 ### AI 智能分析
-- 🧠 **Qwen 情感分析** - 使用阿里云通义千问分析推文情感
-- 🎯 **SHEIN 相关性判断** - AI 智能判断是否与 SHEIN 品牌相关
+- 🧠 **Qwen 情感分析** - 使用阿里云通义千问分析推文和评论情感
+- 🎯 **SHEIN 相关性判断** - AI 智能判断 Twitter 内容是否与 SHEIN 品牌相关
+- 🏷️ **主题识别** - App Store 评论自动识别讨论主题（物流、质量、价格、体验等）
 - 📈 **置信度评分** - 每个分析结果都带有置信度
 - 🔍 **关键词提取** - 自动识别 SHEIN 相关关键词
 
 ### 报告生成
 - 📝 **双语报告** - 支持中英文报告
-- 📊 **数据统计** - 总览、情感分布、相关性统计
-- 🎨 **分类展示** - 按情感、账号、相关性分类
+- 📊 **数据统计** - Twitter: 总览、情感分布、相关性统计 | App Store: 评分分布、主题统计
+- 🎨 **分类展示** - Twitter: 按情感、账号、相关性分类 | App Store: 按地区、评分、情感分类
+- 🌍 **多地区对比** - App Store 评论支持美国、英国、加拿大、澳大利亚等地区对比
 - 📡 **RSS 订阅** - 自动生成 RSS feed
 
 ### 多渠道发布
@@ -36,16 +39,21 @@
 ```
 twitter-radar/
 ├── .github/workflows/
-│   └── daily-analysis.yml        # GitHub Actions 工作流
+│   ├── analyze.yml               # Twitter 分析工作流
+│   ├── analyze-appstore.yml      # App Store 分析工作流
+│   └── pages.yml                 # GitHub Pages 部署
 ├── config/
 │   └── config.yml                # 配置文件（监控账号、关键词等）
 ├── src/
 │   ├── collectors/
-│   │   └── twitter.ts            # Twitter API 集成
+│   │   ├── twitter.ts            # Twitter API 集成
+│   │   └── app-store.ts          # App Store 评论抓取
 │   ├── analyzers/
-│   │   └── qwen.ts               # Qwen AI 分析
+│   │   ├── qwen.ts               # Twitter Qwen AI 分析
+│   │   └── app-store.ts          # App Store Qwen AI 分析
 │   ├── generators/
-│   │   ├── markdown.ts           # Markdown 报告生成
+│   │   ├── markdown.ts           # Twitter Markdown 报告生成
+│   │   ├── app-store-markdown.ts # App Store Markdown 报告生成
 │   │   └── rss.ts                # RSS feed 生成
 │   ├── notifiers/
 │   │   └── telegram.ts           # Telegram 通知
