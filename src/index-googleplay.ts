@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { collectGooglePlayReviews, getGooglePlayAppInfo } from './collectors/google-play.js';
 import { analyzeBatch } from './analyzers/google-play.js';
 import { generateGooglePlayReport } from './generators/google-play-markdown.js';
+import { sendNegativeReviewsNotification } from './notifiers/telegram.js';
 import type { GooglePlayConfig } from './types.js';
 
 // Google Play configuration
@@ -71,6 +72,10 @@ async function main() {
       negativePercent: ((negative / analyzed.length) * 100).toFixed(1),
     }));
     console.error('STATS_JSON_END');
+
+    // Send detailed negative reviews to Telegram
+    console.error('\n📤 Sending negative reviews to Telegram...');
+    await sendNegativeReviewsNotification([], analyzed, undefined);
 
     console.error('\n✅ Google Play analysis complete!');
   } catch (error) {

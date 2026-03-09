@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { format } from 'date-fns';
+import { toZonedTime, formatInTimeZone } from 'date-fns-tz';
 import type { AnalyzedTweet, Digest } from '../types.js';
 import { OUTPUT_DIR } from '../config.js';
 
@@ -123,7 +124,13 @@ function formatTweet(tweet: AnalyzedTweet, language: 'en' | 'zh'): string {
     }
   }
 
-  lines.push(`**${language === 'en' ? 'Posted' : '发布时间'}**: ${new Date(tweet.createdAt).toLocaleString(language === 'en' ? 'en-US' : 'zh-CN')}`);
+  // Format time in Beijing timezone (Asia/Shanghai)
+  const beijingTime = formatInTimeZone(
+    new Date(tweet.createdAt),
+    'Asia/Shanghai',
+    'yyyy-MM-dd HH:mm:ss'
+  );
+  lines.push(`**${language === 'en' ? 'Posted' : '发布时间'}**: ${beijingTime} (北京时间)`);
 
   return lines.join('\n');
 }

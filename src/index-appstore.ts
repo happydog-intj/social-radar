@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { collectAppStoreReviews, getAppInfo } from './collectors/app-store.js';
 import { analyzeBatch } from './analyzers/app-store.js';
 import { generateAppStoreReport } from './generators/app-store-markdown.js';
+import { sendNegativeReviewsNotification } from './notifiers/telegram.js';
 import type { AppStoreConfig } from './types.js';
 
 // App Store configuration
@@ -66,6 +67,10 @@ async function main() {
       negativePercent: ((negative / analyzed.length) * 100).toFixed(1),
     }));
     console.error('STATS_JSON_END');
+
+    // Send detailed negative reviews to Telegram
+    console.error('\n📤 Sending negative reviews to Telegram...');
+    await sendNegativeReviewsNotification(analyzed, [], undefined);
 
     console.error('\n✅ App Store analysis complete!');
   } catch (error) {

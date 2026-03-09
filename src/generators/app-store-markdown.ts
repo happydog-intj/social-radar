@@ -1,6 +1,7 @@
 import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { format } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import type { AnalyzedAppStoreReview, AppStoreDigest } from '../types.js';
 import { OUTPUT_DIR } from '../config.js';
 
@@ -120,18 +121,19 @@ function generateEnglishReport(digest: AppStoreDigest): string {
     const negative = reviews.filter((r) => r.sentiment.sentiment === 'negative');
     const neutral = reviews.filter((r) => r.sentiment.sentiment === 'neutral');
 
+    // Show negative reviews FIRST (prioritized)
+    if (negative.length > 0) {
+      markdown += `#### 🚨 Negative Reviews (${negative.length}) - PRIORITY\n\n`;
+      markdown += `> **⚠️ Critical Feedback** - These reviews require attention\n\n`;
+      negative.slice(0, 5).forEach((review) => {
+        markdown += formatReviewEN(review, true); // Pass flag for highlighted style
+      });
+    }
+
     // Show positive reviews
     if (positive.length > 0) {
       markdown += `#### 😊 Positive Reviews (${positive.length})\n\n`;
       positive.slice(0, 5).forEach((review) => {
-        markdown += formatReviewEN(review);
-      });
-    }
-
-    // Show negative reviews
-    if (negative.length > 0) {
-      markdown += `#### 😞 Negative Reviews (${negative.length})\n\n`;
-      negative.slice(0, 5).forEach((review) => {
         markdown += formatReviewEN(review);
       });
     }
@@ -198,18 +200,19 @@ function generateChineseReport(digest: AppStoreDigest): string {
     const negative = reviews.filter((r) => r.sentiment.sentiment === 'negative');
     const neutral = reviews.filter((r) => r.sentiment.sentiment === 'neutral');
 
+    // Show negative reviews FIRST (prioritized)
+    if (negative.length > 0) {
+      markdown += `#### 🚨 负面评价 (${negative.length}) - 优先关注\n\n`;
+      markdown += `> **⚠️ 重要反馈** - 这些评价需要关注\n\n`;
+      negative.slice(0, 5).forEach((review) => {
+        markdown += formatReviewZH(review, true); // Pass flag for highlighted style
+      });
+    }
+
     // Show positive reviews
     if (positive.length > 0) {
       markdown += `#### 😊 正面评价 (${positive.length})\n\n`;
       positive.slice(0, 5).forEach((review) => {
-        markdown += formatReviewZH(review);
-      });
-    }
-
-    // Show negative reviews
-    if (negative.length > 0) {
-      markdown += `#### 😞 负面评价 (${negative.length})\n\n`;
-      negative.slice(0, 5).forEach((review) => {
         markdown += formatReviewZH(review);
       });
     }
@@ -224,21 +227,45 @@ function generateChineseReport(digest: AppStoreDigest): string {
   return markdown;
 }
 
-function formatReviewEN(review: AnalyzedAppStoreReview): string {
-  let md = `##### ${'⭐'.repeat(review.rating)} ${review.title}\n\n`;
+function formatReviewEN(review: AnalyzedAppStoreReview, isNegative: boolean = false): string {
+  const prefix = isNegative ? '🚨 ' : '';
+  let md = `##### ${prefix}${'⭐'.repeat(review.rating)} ${review.title}\n\n`;
+  if (isNegative) {
+    md += `> **⚠️ NEGATIVE FEEDBACK**\n>\n`;
+  }
   md += `> ${review.content}\n\n`;
-  md += `**Author**: ${review.author} | **Version**: ${review.version} | **Date**: ${format(review.date, 'yyyy-MM-dd')}\n\n`;
-  md += `**AI Analysis**: ${review.sentiment.summary}\n\n`;
+  const beijingTime = formatInTimeZone(review.date, 'Asia/Shanghai', 'yyyy-MM-dd HH:mm:ss');
+  md += `**Author**: ${review.author} | **Version**: ${review.version} | **Date**: ${beijingTime} (北京时间)\n\n`;
+  if (isNegative) {
+    md += `**🔴 AI Analysis**: ${review.sentiment.summary}\n\n`;
+  } else {
+    md += `**AI Analysis**: ${review.sentiment.summary}\n\n`;
+  }
   md += `**Topics**: ${review.topics.map(formatTopic).join(', ')}\n\n`;
+  if (isNegative) {
+    md += `---\n\n`;
+  }
   return md;
 }
 
-function formatReviewZH(review: AnalyzedAppStoreReview): string {
-  let md = `##### ${'⭐'.repeat(review.rating)} ${review.title}\n\n`;
+function formatReviewZH(review: AnalyzedAppStoreReview, isNegative: boolean = false): string {
+  const prefix = isNegative ? '🚨 ' : '';
+  let md = `##### ${prefix}${'⭐'.repeat(review.rating)} ${review.title}\n\n`;
+  if (isNegative) {
+    md += `> **⚠️ 负面反馈**\n>\n`;
+  }
   md += `> ${review.content}\n\n`;
-  md += `**用户**: ${review.author} | **版本**: ${review.version} | **日期**: ${format(review.date, 'yyyy-MM-dd')}\n\n`;
-  md += `**AI 分析**: ${review.sentiment.summary}\n\n`;
+  const beijingTime = formatInTimeZone(review.date, 'Asia/Shanghai', 'yyyy-MM-dd HH:mm:ss');
+  md += `**用户**: ${review.author} | **版本**: ${review.version} | **日期**: ${beijingTime} (北京时间)\n\n`;
+  if (isNegative) {
+    md += `**🔴 AI 分析**: ${review.sentiment.summary}\n\n`;
+  } else {
+    md += `**AI 分析**: ${review.sentiment.summary}\n\n`;
+  }
   md += `**主题**: ${review.topics.map(formatTopicZH).join('、')}\n\n`;
+  if (isNegative) {
+    md += `---\n\n`;
+  }
   return md;
 }
 

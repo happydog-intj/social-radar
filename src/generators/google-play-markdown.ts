@@ -1,6 +1,7 @@
 import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { format } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import type { AnalyzedGooglePlayReview, GooglePlayDigest } from '../types.js';
 import { OUTPUT_DIR } from '../config.js';
 
@@ -143,18 +144,19 @@ function generateEnglishReport(digest: GooglePlayDigest): string {
     const positive = reviews.filter((r) => r.sentiment.sentiment === 'positive');
     const negative = reviews.filter((r) => r.sentiment.sentiment === 'negative');
 
+    // Show negative reviews FIRST (prioritized)
+    if (negative.length > 0) {
+      markdown += `#### 🚨 Negative Reviews (${negative.length}) - PRIORITY\n\n`;
+      markdown += `> **⚠️ Critical Feedback** - These reviews require attention\n\n`;
+      negative.slice(0, 5).forEach((review) => {
+        markdown += formatReviewEN(review, true);
+      });
+    }
+
     // Show positive reviews
     if (positive.length > 0) {
       markdown += `#### 😊 Positive Reviews (${positive.length})\n\n`;
       positive.slice(0, 5).forEach((review) => {
-        markdown += formatReviewEN(review);
-      });
-    }
-
-    // Show negative reviews
-    if (negative.length > 0) {
-      markdown += `#### 😞 Negative Reviews (${negative.length})\n\n`;
-      negative.slice(0, 5).forEach((review) => {
         markdown += formatReviewEN(review);
       });
     }
@@ -223,18 +225,19 @@ function generateChineseReport(digest: GooglePlayDigest): string {
     const positive = reviews.filter((r) => r.sentiment.sentiment === 'positive');
     const negative = reviews.filter((r) => r.sentiment.sentiment === 'negative');
 
+    // Show negative reviews FIRST (prioritized)
+    if (negative.length > 0) {
+      markdown += `#### 🚨 负面评价 (${negative.length}) - 优先关注\n\n`;
+      markdown += `> **⚠️ 重要反馈** - 这些评价需要关注\n\n`;
+      negative.slice(0, 5).forEach((review) => {
+        markdown += formatReviewZH(review, true);
+      });
+    }
+
     // Show positive reviews
     if (positive.length > 0) {
       markdown += `#### 😊 正面评价 (${positive.length})\n\n`;
       positive.slice(0, 5).forEach((review) => {
-        markdown += formatReviewZH(review);
-      });
-    }
-
-    // Show negative reviews
-    if (negative.length > 0) {
-      markdown += `#### 😞 负面评价 (${negative.length})\n\n`;
-      negative.slice(0, 5).forEach((review) => {
         markdown += formatReviewZH(review);
       });
     }
@@ -249,31 +252,59 @@ function generateChineseReport(digest: GooglePlayDigest): string {
   return markdown;
 }
 
-function formatReviewEN(review: AnalyzedGooglePlayReview): string {
-  let md = `##### ${'⭐'.repeat(review.rating)} by ${review.userName}\n\n`;
+function formatReviewEN(review: AnalyzedGooglePlayReview, isNegative: boolean = false): string {
+  const prefix = isNegative ? '🚨 ' : '';
+  let md = `##### ${prefix}${'⭐'.repeat(review.rating)} by ${review.userName}\n\n`;
+  if (isNegative) {
+    md += `> **⚠️ NEGATIVE FEEDBACK**\n>\n`;
+  }
   md += `> ${review.text}\n\n`;
-  md += `**Version**: ${review.version} | **Date**: ${format(review.date, 'yyyy-MM-dd')} | **👍**: ${review.thumbsUp}\n\n`;
-  md += `**AI Analysis**: ${review.sentiment.summary}\n\n`;
+  const beijingTime = formatInTimeZone(review.date, 'Asia/Shanghai', 'yyyy-MM-dd HH:mm:ss');
+  md += `**Version**: ${review.version} | **Date**: ${beijingTime} (北京时间) | **👍**: ${review.thumbsUp}\n\n`;
+  if (isNegative) {
+    md += `**🔴 AI Analysis**: ${review.sentiment.summary}\n\n`;
+  } else {
+    md += `**AI Analysis**: ${review.sentiment.summary}\n\n`;
+  }
   md += `**Topics**: ${review.topics.map(formatTopic).join(', ')}\n\n`;
 
   if (review.replyText) {
-    md += `**🏢 Developer Reply** (${review.replyDate ? format(review.replyDate, 'yyyy-MM-dd') : 'N/A'}):\n`;
+    const replyBeijingTime = review.replyDate ? formatInTimeZone(review.replyDate, 'Asia/Shanghai', 'yyyy-MM-dd HH:mm:ss') : 'N/A';
+    md += `**🏢 Developer Reply** (${replyBeijingTime}):\n`;
     md += `> ${review.replyText}\n\n`;
+  }
+
+  if (isNegative) {
+    md += `---\n\n`;
   }
 
   return md;
 }
 
-function formatReviewZH(review: AnalyzedGooglePlayReview): string {
-  let md = `##### ${'⭐'.repeat(review.rating)} - ${review.userName}\n\n`;
+function formatReviewZH(review: AnalyzedGooglePlayReview, isNegative: boolean = false): string {
+  const prefix = isNegative ? '🚨 ' : '';
+  let md = `##### ${prefix}${'⭐'.repeat(review.rating)} - ${review.userName}\n\n`;
+  if (isNegative) {
+    md += `> **⚠️ 负面反馈**\n>\n`;
+  }
   md += `> ${review.text}\n\n`;
-  md += `**版本**: ${review.version} | **日期**: ${format(review.date, 'yyyy-MM-dd')} | **👍**: ${review.thumbsUp}\n\n`;
-  md += `**AI 分析**: ${review.sentiment.summary}\n\n`;
+  const beijingTime = formatInTimeZone(review.date, 'Asia/Shanghai', 'yyyy-MM-dd HH:mm:ss');
+  md += `**版本**: ${review.version} | **日期**: ${beijingTime} (北京时间) | **👍**: ${review.thumbsUp}\n\n`;
+  if (isNegative) {
+    md += `**🔴 AI 分析**: ${review.sentiment.summary}\n\n`;
+  } else {
+    md += `**AI 分析**: ${review.sentiment.summary}\n\n`;
+  }
   md += `**主题**: ${review.topics.map(formatTopicZH).join('、')}\n\n`;
 
   if (review.replyText) {
-    md += `**🏢 开发者回复** (${review.replyDate ? format(review.replyDate, 'yyyy-MM-dd') : 'N/A'}):\n`;
+    const replyBeijingTime = review.replyDate ? formatInTimeZone(review.replyDate, 'Asia/Shanghai', 'yyyy-MM-dd HH:mm:ss') : 'N/A';
+    md += `**🏢 开发者回复** (${replyBeijingTime}):\n`;
     md += `> ${review.replyText}\n\n`;
+  }
+
+  if (isNegative) {
+    md += `---\n\n`;
   }
 
   return md;
