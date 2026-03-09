@@ -213,7 +213,7 @@ export async function analyzeBatch(tweets: Tweet[]): Promise<AnalyzedTweet[]> {
   const results: AnalyzedTweet[] = [];
 
   for (let i = 0; i < tweets.length; i++) {
-    console.log(`Analyzing tweet ${i + 1}/${tweets.length}...`);
+    console.error(`Analyzing tweet ${i + 1}/${tweets.length}...`);
 
     try {
       const analyzed = await analyzeTweetWithQwen(tweets[i]);

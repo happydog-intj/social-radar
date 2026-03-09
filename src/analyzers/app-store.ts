@@ -128,7 +128,7 @@ export async function analyzeBatch(
 ): Promise<AnalyzedAppStoreReview[]> {
   const analyzed: AnalyzedAppStoreReview[] = [];
 
-  console.log(`\n🤖 Analyzing ${reviews.length} reviews with Qwen AI...\n`);
+  console.error(`\n🤖 Analyzing ${reviews.length} reviews with Qwen AI...\n`);
 
   for (let i = 0; i < reviews.length; i++) {
     const review = reviews[i];
@@ -137,7 +137,7 @@ export async function analyzeBatch(
       onProgress(i + 1, reviews.length);
     }
 
-    console.log(`[${i + 1}/${reviews.length}] Analyzing review from ${review.region}...`);
+    console.error(`[${i + 1}/${reviews.length}] Analyzing review from ${review.region}...`);
 
     const analyzedReview = await analyzeReview(review);
     analyzed.push(analyzedReview);
@@ -148,7 +148,7 @@ export async function analyzeBatch(
     }
   }
 
-  console.log(`\n✅ Analysis complete!\n`);
+  console.error(`\n✅ Analysis complete!\n`);
 
   return analyzed;
 }
