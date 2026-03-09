@@ -2,7 +2,7 @@ name: Twitter Analysis
 
 on:
   schedule:
-    - cron: '0 2 * * *'  # Run daily at 2 AM UTC
+    - cron: '0 17 * * *'  # Run daily at 01:00 Beijing time (17:00 UTC previous day)
   workflow_dispatch:  # Allow manual trigger
 
 concurrency:

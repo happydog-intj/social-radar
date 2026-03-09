@@ -2,7 +2,7 @@ name: Google Play Analysis
 
 on:
   schedule:
-    - cron: '0 3 * * *'  # Run daily at 3:00 AM UTC (1 hour after App Store)
+    - cron: '30 16 * * *'  # Run daily at 00:30 Beijing time (16:30 UTC previous day)
   workflow_dispatch:  # Allow manual trigger
 
 concurrency:
