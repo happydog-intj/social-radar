@@ -13,23 +13,23 @@ interface QwenAnalysisResult {
 }
 
 export async function analyzeReview(review: AppStoreReview): Promise<AnalyzedAppStoreReview> {
-  const prompt = `You are analyzing an App Store review for SHEIN shopping app. Analyze the following review and provide:
+  const prompt = `你正在分析 SHEIN 购物应用的 App Store 评论。请分析以下评论并提供：
 
-1. Sentiment: positive, negative, or neutral
-2. Sentiment score: -1 (very negative) to 1 (very positive)
-3. Main topics/issues mentioned (choose from: delivery, quality, price, ui/ux, customer-service, sizing, returns, payment, other)
-4. Brief explanation of the sentiment
+1. 情感倾向：positive（正面）、negative（负面）或 neutral（中性）
+2. 情感分数：-1（非常负面）到 1（非常正面）
+3. 主要话题/问题（从以下选择：delivery, quality, price, ui/ux, customer-service, sizing, returns, payment, other）
+4. 情感的简要中文解释（1-2句话）
 
-Review:
-Title: ${review.title}
-Rating: ${review.rating}/5
-Content: ${review.content}
+评论内容：
+标题：${review.title}
+评分：${review.rating}/5
+内容：${review.content}
 
-Respond in JSON format:
+请用JSON格式回复：
 {
   "sentiment": "positive|negative|neutral",
-  "score": -1 to 1,
-  "explanation": "brief explanation in English",
+  "score": -1 到 1 之间的数值,
+  "explanation": "用中文简要解释情感倾向（1-2句话）",
   "topics": ["topic1", "topic2", ...]
 }`;
 
